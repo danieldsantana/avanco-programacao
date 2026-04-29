@@ -6,6 +6,7 @@
 <title>Dashboard Avanço Semanal</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root {
     --green: #2ecc40;
@@ -364,6 +365,7 @@
 </head>
 <body>
 
+<div id="pdf-content">
 <h1 class="page-title">📋 Avanço Semanal — Dashboard</h1>
 
 <div class="toolbar">
@@ -371,7 +373,7 @@
   <button class="btn btn-save" id="saveBtn" style="display:none">💾 Salvar</button>
   <button class="btn btn-login" id="loginBtn">🔐 Login</button>
   <button class="btn btn-logout" id="logoutBtn" style="display:none">🚪 Sair</button>
-  <button class="btn btn-print" onclick="window.print()">🖨️ Imprimir</button>
+  <button class="btn btn-print" id="pdfBtn">📄 Gerar PDF</button>
 </div>
 
 <div id="loading" class="loading-state">Carregando dados...</div>
@@ -379,6 +381,8 @@
 <div class="cards-grid" id="grid" style="display:none">
   <!-- Cards rendered by JS -->
 </div>
+
+</div><!-- #pdf-content -->
 
 <!-- Modal de Login -->
 <div id="loginModal" class="modal-overlay">
@@ -762,20 +766,30 @@ document.getElementById('loginModal').addEventListener('click', e => {
   if (e.target === document.getElementById('loginModal')) hideLoginModal();
 });
 
-/* troca inputs por spans antes de imprimir para evitar quebras de linha */
-window.addEventListener('beforeprint', () => {
-  document.querySelectorAll('.meta-input').forEach(input => {
-    if (input.style.display === 'none') return;
-    const span = document.createElement('span');
-    span.className = '_ps';
-    span.textContent = input.value;
-    input.before(span);
-    input.classList.add('_ph');
-  });
-});
-window.addEventListener('afterprint', () => {
-  document.querySelectorAll('._ps').forEach(el => el.remove());
-  document.querySelectorAll('._ph').forEach(el => el.classList.remove('_ph'));
+document.getElementById('pdfBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('pdfBtn');
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+
+  const toolbar = document.querySelector('.toolbar');
+  toolbar.style.display = 'none';
+
+  try {
+    await html2pdf()
+      .set({
+        margin: 8,
+        filename: 'avanco-semanal.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      })
+      .from(document.getElementById('pdf-content'))
+      .save();
+  } finally {
+    toolbar.style.display = '';
+    btn.textContent = '📄 Gerar PDF';
+    btn.disabled = false;
+  }
 });
 </script>
 </body>
