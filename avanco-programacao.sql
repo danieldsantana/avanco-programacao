@@ -82,19 +82,19 @@ INSERT INTO cards
    message, msg_footer_label, sort_order)
 VALUES
   (
-    'preliminares', 'teal', '🚜', 'PRELIMINARES', '(PRELIMINARY)', 'SUB-ATIVIDADES:',
+    'preliminares', 'teal', '🍀', 'PRELIMINARES', '(PRELIMINARY)', 'SUB-ATIVIDADES:',
     4, 6, 9, 104,
     'Avanço excelente nos acessos e áreas específicas! Vamos manter o ritmo para o fechamento.',
     NULL, 1
   ),
   (
-    'obracivil', 'orange', '🏗️', 'OBRA CIVIL', '(CIVIL WORKS)', NULL,
+    'obracivil', 'orange', '🚧', 'OBRA CIVIL', '(CIVIL WORKS)', NULL,
     13, 12, 12, 94,
     'Atenção especial ao cronograma de concretagem! Próxima semana é crucial!.',
     NULL, 2
   ),
   (
-    'montagem', 'olive', '⚡', 'MONTAGEM', '(ASSEMBLY)', NULL,
+    'montagem', 'olive', '🔩', 'MONTAGEM', '(ASSEMBLY)', NULL,
     12, 12, 10, 83,
     'Bom progresso no transporte e pré-montagem. Vamos manter o ritmo para o fechamento das frentes!',
     'MENSAGEM DA SEMANA', 3
@@ -103,19 +103,19 @@ VALUES
 INSERT INTO activities (card_id, icon, name, real_val, meta, pct, na, is_percent, position)
 VALUES
   -- PRELIMINARES
-  ('preliminares', '📍', 'ACESSO',         9,   6,   NULL, false, false, 0),
-  ('preliminares', '⛏️', 'SUPRESSÃO',      7,   9,   NULL, false, false, 1),
-  ('preliminares', '📡', 'ÁREA DE TORRE',  20,  14,  NULL, false, false, 2),
-  ('preliminares', '🔥', 'CORTE SELETIVO', 11,  16,  NULL, false, false, 3),
+  ('preliminares', '🛣️', 'ACESSO',         9,   6,   NULL, false, false, 0),
+  ('preliminares', '🪓', 'SUPRESSÃO',      7,   9,   NULL, false, false, 1),
+  ('preliminares', '🚜', 'ÁREA DE TORRE',  20,  14,  NULL, false, false, 2),
+  ('preliminares', '🌳', 'CORTE SELETIVO', 11,  16,  NULL, false, false, 3),
   -- OBRA CIVIL
-  ('obracivil', '🪨', 'ESCAVAÇÃO',   12,  13,  NULL, false, false, 0),
-  ('obracivil', '🏔️', 'REATERRO',    100, 100, NULL, false, false, 1),
-  ('obracivil', '⚙️', 'CONTRA PESO', 6,   12,  NULL, false, false, 2),
+  ('obracivil', '⛏️', 'ESCAVAÇÃO',   12,  13,  NULL, false, false, 0),
+  ('obracivil', '🟫', 'REATERRO',    100, 100, NULL, false, false, 1),
+  ('obracivil', '⚡', 'CONTRA PESO', 6,   12,  NULL, false, false, 2),
   ('obracivil', '📋', 'ENSAIOS',     16,  12,  NULL, false, false, 3),
   -- MONTAGEM
   ('montagem', '🚚', 'TRANSPORTE',   11, 14, NULL, false, false, 0),
-  ('montagem', '👷', 'PRÉ-MONTAGEM', 10, 12, NULL, false, false, 1),
-  ('montagem', '🔧', 'MONTAGEM',     0,  10, NULL, false, false, 2),
+  ('montagem', '🔧', 'PRÉ-MONTAGEM', 10, 12, NULL, false, false, 1),
+  ('montagem', '🏗️', 'MONTAGEM',     0,  10, NULL, false, false, 2),
   ('montagem', '🔍', 'REVISÃO',      0,  10, NULL, false, false, 3);
 
 
