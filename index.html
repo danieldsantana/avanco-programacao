@@ -837,8 +837,8 @@ function renderCard(card) {
         ? `<span class="act-pct" contenteditable="false" data-field="real" data-card="${card.id}" data-act="${i}">${act.real}</span>%`
         : `<span class="act-pct act-vals-view" data-card="${card.id}" data-act="${i}">${act.real} / ${act.meta}</span>
          <span class="act-vals-edit">
-           <input class="val-input" type="number" data-card="${card.id}" data-act="${i}" data-field="real" value="${act.real}"> /
-           <input class="val-input" type="number" data-card="${card.id}" data-act="${i}" data-field="meta" value="${act.meta}">
+           <input class="val-input" type="number" step="any" data-card="${card.id}" data-act="${i}" data-field="real" value="${act.real}"> /
+           <input class="val-input" type="number" step="any" data-card="${card.id}" data-act="${i}" data-field="meta" value="${act.meta}">
          </span>`;
 
     const progressHTML = act.na
