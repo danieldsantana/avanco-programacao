@@ -439,6 +439,155 @@
     color: #fff;
   }
 
+  /* Visibilidade */
+  .card.card-hidden { opacity: 0.35; }
+  .card-hidden-label {
+    display: none;
+    position: absolute;
+    top: 8px; left: 8px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .card { position: relative; }
+  body.edit-mode .card-hidden-label { display: block; }
+
+  /* Toggle visibilidade */
+  .visibility-toggle {
+    display: none;
+    position: absolute;
+    top: 8px; right: 8px;
+    z-index: 10;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.45);
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  body.edit-mode .visibility-toggle { display: flex; }
+  .visibility-toggle input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--teal); }
+  .visibility-toggle span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Color pickers */
+  .card-color-row {
+    display: none;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 14px;
+    background: #f0f0f0;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #555;
+  }
+  body.edit-mode .card-color-row { display: flex; }
+  .card-color-row input[type="color"] {
+    width: 32px; height: 32px;
+    border: none; border-radius: 6px;
+    cursor: pointer; padding: 0;
+    background: none;
+  }
+
+  /* Emoji picker */
+  .emoji-btn {
+    display: none;
+    position: absolute;
+    bottom: 6px; right: 6px;
+    background: rgba(0,0,0,0.45);
+    border: none;
+    border-radius: 6px;
+    padding: 3px 7px;
+    cursor: pointer;
+    color: #fff;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    z-index: 5;
+  }
+  body.edit-mode .emoji-btn { display: block; }
+  .banner-placeholder { position: relative; }
+
+  .emoji-picker-popup {
+    display: none;
+    position: absolute;
+    z-index: 200;
+    background: #fff;
+    border: 1.5px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    width: 260px;
+    max-height: 220px;
+    overflow-y: auto;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .emoji-picker-popup.open { display: flex; }
+  .emoji-picker-popup button {
+    font-size: 1.4rem;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 4px;
+    transition: background 0.12s;
+  }
+  .emoji-picker-popup button:hover { background: #f0f0f0; }
+
+  /* Adicionar / remover atividades */
+  .act-remove-btn {
+    display: none;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  body.edit-mode .act-remove-btn { display: flex; }
+
+  .add-activity-btn {
+    display: none;
+    width: 100%;
+    margin: 6px 0 4px;
+    padding: 6px;
+    background: none;
+    border: 2px dashed #ccc;
+    border-radius: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #999;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .add-activity-btn:hover { border-color: var(--teal); color: var(--teal); }
+  body.edit-mode .add-activity-btn { display: block; }
+
   /* ── PRINT ── */
   @media print {
     .toolbar { display: none; }
@@ -503,6 +652,20 @@
    Substitua pelos valores do seu projeto em:
    https://supabase.com → Project Settings → API
    // Tabela necessária: config (key TEXT PRIMARY KEY, value TEXT)
+   // Tabelas necessárias — execute no SQL Editor do Supabase:
+   //
+   // CREATE TABLE emojis (
+   //   id       SERIAL PRIMARY KEY,
+   //   emoji    TEXT NOT NULL,
+   //   position INT DEFAULT 0
+   // );
+   //
+   // ALTER TABLE cards ADD COLUMN IF NOT EXISTS visible BOOLEAN DEFAULT true;
+   // ALTER TABLE cards ADD COLUMN IF NOT EXISTS color1  TEXT DEFAULT '#1a9bb5';
+   // ALTER TABLE cards ADD COLUMN IF NOT EXISTS color2  TEXT DEFAULT '#a8e063';
+   //
+   // Após criar a tabela, abra seed-emojis.html no browser para populá-la.
+   // O arquivo seed-emojis.html é de uso único e não deve ser publicado.
 ════════════════════════════════════════════ */
 const SUPABASE_URL = 'https://ilpijnuxkkyoyzccylzj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__X0os9OU9nNEj9-xnX2-Cg_vLme29V4';
@@ -527,7 +690,9 @@ async function loadData() {
     title:           c.title,
     titleSub:        c.title_sub,
     subLabel:        c.sub_label,
-
+    visible: c.visible !== false,
+    color1:  c.color1 || '#1a9bb5',
+    color2:  c.color2 || '#a8e063',
     message:         c.message,
     msgFooterLabel:  c.msg_footer_label,
     sortOrder:       c.sort_order,
@@ -570,6 +735,13 @@ async function saveData(data) {
   await sb.from('config').upsert({ key: 'semana_atual', value: semanaText });
   await sb.from('config').upsert({ key: 'dias_semana',  value: `${diaAtual}/${diasSemana}` });
 
+  if (data._deletedActivityIds?.length) {
+    await sb.from('activities')
+      .delete()
+      .in('id', data._deletedActivityIds);
+    data._deletedActivityIds = [];
+  }
+
   for (const card of data.cards) {
     const { error: ce } = await sb.from('cards').upsert({
       id:               card.id,
@@ -578,7 +750,9 @@ async function saveData(data) {
       title:            card.title,
       title_sub:        card.titleSub,
       sub_label:        card.subLabel,
-
+      visible:          card.visible,
+      color1:           card.color1,
+      color2:           card.color2,
       message:          card.message,
       msg_footer_label: card.msgFooterLabel,
       sort_order:       card.sortOrder || 0,
@@ -628,6 +802,17 @@ function barColor(pct) {
 /* ════════════════════════════════════════════
    RENDER
 ════════════════════════════════════════════ */
+function applyCardColors(card) {
+  const c = document.getElementById(`card-${card.id}`);
+  if (!c) return;
+  c.querySelectorAll('.card-header, .section-bar').forEach(el => {
+    el.style.background = card.color1;
+  });
+  const banner = document.getElementById(`banner-${card.id}`);
+  if (banner) banner.style.background =
+    `linear-gradient(135deg, ${card.color1} 0%, ${card.color2} 100%)`;
+}
+
 function renderCard(card) {
   const activitiesHTML = card.activities.map((act, i) => {
     let pct = act.pct;
@@ -663,6 +848,9 @@ function renderCard(card) {
         ${progressHTML}
       </div>
       ${valDisplay}
+      <button class="act-remove-btn"
+        data-card="${card.id}" data-act="${i}"
+        title="Remover atividade">×</button>
     </div>`;
   }).join('');
 
@@ -680,19 +868,39 @@ function renderCard(card) {
   </div>`;
 
   const footerLabel = card.msgFooterLabel
-    ? `<div class="section-bar ${card.theme}">${card.msgFooterLabel}</div>`
-    : `<div class="section-bar ${card.theme}">MENSAGEM DA SEMANA</div>`;
+    ? `<div class="section-bar" style="background:${card.color1}">${card.msgFooterLabel}</div>`
+    : `<div class="section-bar" style="background:${card.color1}">MENSAGEM DA SEMANA</div>`;
 
   return `
-  <div class="card" id="card-${card.id}">
-    <div class="card-header ${card.theme}">
+  <div class="card${card.visible === false ? ' card-hidden' : ''}" id="card-${card.id}">
+    <div class="card-hidden-label">Oculto</div>
+    <label class="visibility-toggle" title="Visível no dashboard">
+      <input type="checkbox" class="vis-check" data-card="${card.id}"
+        ${card.visible !== false ? 'checked' : ''}>
+      <span>Visível</span>
+    </label>
+    <div class="card-header" style="background:${card.color1}">
       <div class="category">${card.title}</div>
       <div class="avanço-label">AVANÇO SEMANAL</div>
     </div>
-    <div class="banner-placeholder ${card.theme}">${card.emoji}</div>
-    <div class="section-bar ${card.theme}">AVANÇO SEMANAL</div>
+    <div class="banner-placeholder" id="banner-${card.id}"
+         style="background: linear-gradient(135deg, ${card.color1} 0%, ${card.color2} 100%)">
+      ${card.emoji}
+      <button class="emoji-btn" data-card="${card.id}">✏️ Emoji</button>
+      <div class="emoji-picker-popup" id="emoji-picker-${card.id}">
+        ${emojiList.map(e =>
+          `<button class="emoji-opt" data-card="${card.id}" data-emoji="${e}">${e}</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="card-color-row">
+      COR 1: <input type="color" class="color1-input" data-card="${card.id}" value="${card.color1}">
+      COR 2: <input type="color" class="color2-input" data-card="${card.id}" value="${card.color2}">
+    </div>
+    <div class="section-bar" style="background:${card.color1}">AVANÇO SEMANAL</div>
     ${card.subLabel ? `<div class="sub-label">${card.subLabel}</div>` : ''}
     <div class="activities">${activitiesHTML}</div>
+    <button class="add-activity-btn" data-card="${card.id}">+ Adicionar Atividade</button>
     ${metaHTML}
     ${footerLabel}
     <div class="msg-box">
@@ -707,6 +915,15 @@ function render(data) {
   grid.innerHTML = data.cards.map(renderCard).join('');
   attachMetaListeners(data);
   attachValListeners(data);
+  attachCardEditListeners(data);
+  data.cards.forEach(card => {
+    if (!editMode && card.visible === false) {
+      const el = document.getElementById(`card-${card.id}`);
+      if (el) el.style.display = 'none';
+    }
+    if (card.visible === false)
+      document.getElementById(`card-${card.id}`)?.classList.add('card-hidden');
+  });
 }
 
 /* ════════════════════════════════════════════
@@ -774,9 +991,95 @@ function attachValListeners(data) {
 }
 
 /* ════════════════════════════════════════════
+   CARD EDIT LISTENERS
+════════════════════════════════════════════ */
+function attachCardEditListeners(data) {
+
+  document.querySelectorAll('.vis-check').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const card = data.cards.find(c => c.id === chk.dataset.card);
+      if (!card) return;
+      card.visible = chk.checked;
+      document.getElementById(`card-${card.id}`)
+        ?.classList.toggle('card-hidden', !chk.checked);
+    });
+  });
+
+  document.querySelectorAll('.color1-input, .color2-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const card = data.cards.find(c => c.id === inp.dataset.card);
+      if (!card) return;
+      if (inp.classList.contains('color1-input')) card.color1 = inp.value;
+      else card.color2 = inp.value;
+      applyCardColors(card);
+    });
+  });
+
+  document.querySelectorAll('.emoji-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const popup = document.getElementById(`emoji-picker-${btn.dataset.card}`);
+      document.querySelectorAll('.emoji-picker-popup.open')
+        .forEach(p => { if (p !== popup) p.classList.remove('open'); });
+      popup?.classList.toggle('open');
+    });
+  });
+
+  document.querySelectorAll('.emoji-opt').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const card = data.cards.find(c => c.id === btn.dataset.card);
+      if (!card) return;
+      card.emoji = btn.dataset.emoji;
+      const banner = document.getElementById(`banner-${card.id}`);
+      if (banner) banner.childNodes[0].textContent = btn.dataset.emoji;
+      document.getElementById(`emoji-picker-${card.id}`)?.classList.remove('open');
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.emoji-picker-popup.open')
+      .forEach(p => p.classList.remove('open'));
+  });
+
+  document.querySelectorAll('.act-remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = data.cards.find(c => c.id === btn.dataset.card);
+      const idx  = parseInt(btn.dataset.act);
+      if (!card) return;
+      const removed = card.activities.splice(idx, 1)[0];
+      if (removed?.id) data._deletedActivityIds.push(removed.id);
+      render(data);
+      if (editMode) setEditMode(true, data);
+    });
+  });
+
+  document.querySelectorAll('.add-activity-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = data.cards.find(c => c.id === btn.dataset.card);
+      if (!card) return;
+      card.activities.push({
+        id:        crypto.randomUUID(),
+        icon:      '🔧',
+        name:      'NOVA ATIVIDADE',
+        real:      0,
+        meta:      0,
+        pct:       null,
+        na:        false,
+        isPercent: false,
+        position:  card.activities.length,
+      });
+      render(data);
+      if (editMode) setEditMode(true, data);
+    });
+  });
+}
+
+/* ════════════════════════════════════════════
    EDIT MODE TOGGLE
 ════════════════════════════════════════════ */
 let editMode = false;
+let emojiList = [];
 
 function setEditMode(on, data) {
   editMode = on;
@@ -791,6 +1094,13 @@ function setEditMode(on, data) {
   });
 
   document.getElementById('toggleEdit').textContent = on ? '🔒 Fechar Edição' : '✏️ Editar Dados';
+
+  if (on) {
+    data.cards.forEach(card => {
+      const el = document.getElementById(`card-${card.id}`);
+      if (el) el.style.display = '';
+    });
+  }
 
   if (!on) {
     collectEdits(data);
@@ -891,6 +1201,10 @@ let appData = null;
 async function init() {
   try {
     appData = await loadData();
+    appData._deletedActivityIds = [];
+    const { data: emojisRaw } = await sb
+      .from('emojis').select('emoji').order('position');
+    emojiList = emojisRaw ? emojisRaw.map(e => e.emoji) : [];
     document.getElementById('loading').style.display = 'none';
     document.getElementById('grid').style.display = '';
     render(appData);

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Seed Emojis</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h2>Seed de Emojis</h2>
+  <div id="status">Aguardando...</div>
+  <button id="runBtn">Rodar Seed</button>
+
+  <script>
+    const SUPABASE_URL = 'https://ilpijnuxkkyoyzccylzj.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable__X0os9OU9nNEj9-xnX2-Cg_vLme29V4';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    document.getElementById('runBtn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('runBtn');
+      statusEl.disabled = true;
+      document.getElementById('status').textContent = 'Buscando lista de emojis...';
+
+      // Fonte: lista completa de emojis Unicode via CDN
+      const res  = await fetch('https://unpkg.com/emoji.json/emoji.json');
+      const list = await res.json();
+
+      document.getElementById('status').textContent =
+        `${list.length} emojis encontrados. Inserindo no Supabase...`;
+
+      // Limpa tabela antes de inserir
+      await sb.from('emojis').delete().neq('id', 0);
+
+      // Insere em lotes de 500 para não exceder limites da API
+      const rows    = list.map((e, i) => ({ emoji: e.char, position: i + 1 }));
+      const batchSz = 500;
+      for (let i = 0; i < rows.length; i += batchSz) {
+        const { error } = await sb.from('emojis').insert(rows.slice(i, i + batchSz));
+        if (error) {
+          document.getElementById('status').textContent = `Erro: ${error.message}`;
+          return;
+        }
+        document.getElementById('status').textContent =
+          `Inserindo... ${Math.min(i + batchSz, rows.length)} / ${rows.length}`;
+      }
+
+      document.getElementById('status').textContent =
+        `✅ Concluído! ${rows.length} emojis inseridos.`;
+    });
+  </script>
+</body>
+</html>
