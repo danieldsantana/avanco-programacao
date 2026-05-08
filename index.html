@@ -366,10 +366,6 @@
   body.edit-mode .act-vals-view { display: none; }
   body.edit-mode .act-vals-edit { display: flex; gap: 4px; align-items: center; }
 
-  /* spans que mostram valores nos labels — somem em modo edição */
-  .meta-lbl-inp { display: none; }
-  body.edit-mode .meta-lbl-inp { display: inline-block; width: 40px; }
-  body.edit-mode .meta-lbl     { display: none; }
 
   /* ── PRINT ── */
   @media print {
@@ -446,8 +442,7 @@ async function loadData() {
     title:           c.title,
     titleSub:        c.title_sub,
     subLabel:        c.sub_label,
-    metaSemana:      c.meta_semana,
-    avancoAcumulado: c.avanco_acumulado,
+
     message:         c.message,
     msgFooterLabel:  c.msg_footer_label,
     sortOrder:       c.sort_order,
@@ -478,8 +473,7 @@ async function saveData(data) {
       title:            card.title,
       title_sub:        card.titleSub,
       sub_label:        card.subLabel,
-      meta_semana:      card.metaSemana,
-      avanco_acumulado: card.avancoAcumulado,
+
       message:          card.message,
       msg_footer_label: card.msgFooterLabel,
       sort_order:       card.sortOrder || 0,
@@ -563,14 +557,17 @@ function renderCard(card) {
 
   const totalMeta = card.activities.reduce((s, a) => s + (a.na ? 0 : a.meta), 0);
   const totalReal = card.activities.reduce((s, a) => s + (a.na ? 0 : a.real), 0);
+  const avancoAcumulado = totalMeta > 0
+    ? parseFloat((totalReal / totalMeta * 100).toFixed(2))
+    : 0;
 
   const metaHTML = `
   <div class="meta-box">
-    <div>META SEMANA (<span class="meta-lbl" data-card="${card.id}" data-lbl="metaSemana">${card.metaSemana}</span><input class="meta-input meta-lbl-inp" type="number" data-card="${card.id}" data-field="metaSemana" value="${card.metaSemana}">):</div>
+    <div>META SEMANA:</div>
     <div><strong id="total-meta-${card.id}">${totalMeta}</strong></div>
-    <div>AVANÇO ():</div>
+    <div>AVANÇO:</div>
     <div><strong id="total-real-${card.id}">${totalReal}</strong></div>
-    <div class="meta-total">AVANÇO ACUMULADO: <span class="meta-lbl" data-card="${card.id}" data-lbl="avancoAcumulado">${card.avancoAcumulado}</span><input class="meta-input meta-lbl-inp" type="number" data-card="${card.id}" data-field="avancoAcumulado" value="${card.avancoAcumulado}">%</div>
+    <div class="meta-total">AVANÇO ACUMULADO: <span id="total-acum-${card.id}">${avancoAcumulado}</span>%</div>
   </div>`;
 
   const footerLabel = card.msgFooterLabel
@@ -656,8 +653,12 @@ function attachValListeners(data) {
       const totalReal = card.activities.reduce((s, a) => s + (a.na ? 0 : a.real), 0);
       const metaEl = document.getElementById(`total-meta-${cardId}`);
       const realEl = document.getElementById(`total-real-${cardId}`);
+      const acumEl = document.getElementById(`total-acum-${cardId}`);
       if (metaEl) metaEl.textContent = totalMeta;
       if (realEl) realEl.textContent = totalReal;
+      if (acumEl) acumEl.textContent = totalMeta > 0
+        ? parseFloat((totalReal / totalMeta * 100).toFixed(2))
+        : 0;
     });
   });
 }
