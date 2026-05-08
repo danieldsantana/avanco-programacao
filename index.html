@@ -613,9 +613,15 @@ function calcPct(real, meta) {
   return Math.round((real / meta) * 100);
 }
 
+function getWeekProgress() {
+  const diaAtual   = parseFloat(document.getElementById('diaAtual')?.value)   || 1;
+  const diasSemana = parseFloat(document.getElementById('diasSemana')?.value) || 5;
+  return diasSemana > 0 ? (diaAtual / diasSemana) * 100 : 0;
+}
+
 function barColor(pct) {
   if (pct >= 100) return '#2ecc40';
-  if (pct >= 80)  return '#f1c40f';
+  if (pct >= getWeekProgress()) return '#f1c40f';
   return '#e74c3c';
 }
 
