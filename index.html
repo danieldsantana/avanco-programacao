@@ -353,6 +353,19 @@
 
   body:not(.edit-mode) .meta-input { pointer-events: none; }
 
+  .act-vals-edit { display: none; }
+  .val-input {
+    width: 42px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.85rem;
+    padding: 1px 4px;
+    text-align: center;
+  }
+  body.edit-mode .act-vals-view { display: none; }
+  body.edit-mode .act-vals-edit { display: flex; gap: 4px; align-items: center; }
+
   /* spans que mostram valores nos labels — somem em modo edição */
   .meta-lbl-inp { display: none; }
   body.edit-mode .meta-lbl-inp { display: inline-block; width: 40px; }
@@ -434,8 +447,6 @@ async function loadData() {
     titleSub:        c.title_sub,
     subLabel:        c.sub_label,
     metaSemana:      c.meta_semana,
-    metaVal:         c.meta_val,
-    avanco:          c.avanco,
     avancoAcumulado: c.avanco_acumulado,
     message:         c.message,
     msgFooterLabel:  c.msg_footer_label,
@@ -468,8 +479,6 @@ async function saveData(data) {
       title_sub:        card.titleSub,
       sub_label:        card.subLabel,
       meta_semana:      card.metaSemana,
-      meta_val:         card.metaVal,
-      avanco:           card.avanco,
       avanco_acumulado: card.avancoAcumulado,
       message:          card.message,
       msg_footer_label: card.msgFooterLabel,
@@ -528,7 +537,11 @@ function renderCard(card) {
       ? `<span class="act-pct" style="color:#999">N/A</span>`
       : act.isPercent
         ? `<span class="act-pct" contenteditable="false" data-field="real" data-card="${card.id}" data-act="${i}">${act.real}</span>%`
-        : `<span class="act-pct" contenteditable="false" data-field="vals" data-card="${card.id}" data-act="${i}">${act.real} / ${act.meta}</span>`;
+        : `<span class="act-pct act-vals-view" data-card="${card.id}" data-act="${i}">${act.real} / ${act.meta}</span>
+         <span class="act-vals-edit">
+           <input class="val-input" type="number" data-card="${card.id}" data-act="${i}" data-field="real" value="${act.real}"> /
+           <input class="val-input" type="number" data-card="${card.id}" data-act="${i}" data-field="meta" value="${act.meta}">
+         </span>`;
 
     const progressHTML = act.na
       ? `<div class="progress-wrap"><div class="progress-bar" style="width:0%;background:#ccc"></div><span class="progress-label" style="color:#999">N/A</span></div>`
@@ -548,12 +561,15 @@ function renderCard(card) {
     </div>`;
   }).join('');
 
+  const totalMeta = card.activities.reduce((s, a) => s + (a.na ? 0 : a.meta), 0);
+  const totalReal = card.activities.reduce((s, a) => s + (a.na ? 0 : a.real), 0);
+
   const metaHTML = `
   <div class="meta-box">
     <div>META SEMANA (<span class="meta-lbl" data-card="${card.id}" data-lbl="metaSemana">${card.metaSemana}</span><input class="meta-input meta-lbl-inp" type="number" data-card="${card.id}" data-field="metaSemana" value="${card.metaSemana}">):</div>
-    <div><strong><input class="meta-input" type="number" data-card="${card.id}" data-field="metaVal" value="${card.metaVal}"></strong></div>
+    <div><strong id="total-meta-${card.id}">${totalMeta}</strong></div>
     <div>AVANÇO ():</div>
-    <div><strong><input class="meta-input" type="number" data-card="${card.id}" data-field="avanco" value="${card.avanco}"></strong></div>
+    <div><strong id="total-real-${card.id}">${totalReal}</strong></div>
     <div class="meta-total">AVANÇO ACUMULADO: <span class="meta-lbl" data-card="${card.id}" data-lbl="avancoAcumulado">${card.avancoAcumulado}</span><input class="meta-input meta-lbl-inp" type="number" data-card="${card.id}" data-field="avancoAcumulado" value="${card.avancoAcumulado}">%</div>
   </div>`;
 
@@ -584,6 +600,7 @@ function render(data) {
   const grid = document.getElementById('grid');
   grid.innerHTML = data.cards.map(renderCard).join('');
   attachMetaListeners(data);
+  attachValListeners(data);
 }
 
 /* ════════════════════════════════════════════
@@ -600,6 +617,47 @@ function attachMetaListeners(data) {
         const lbl = document.querySelector(`.meta-lbl[data-card="${cardId}"][data-lbl="${field}"]`);
         if (lbl) lbl.textContent = input.value;
       }
+    });
+  });
+}
+
+/* ════════════════════════════════════════════
+   VAL INPUT LISTENERS
+════════════════════════════════════════════ */
+function attachValListeners(data) {
+  document.querySelectorAll('.val-input').forEach(input => {
+    input.addEventListener('input', () => {
+      const cardId = input.dataset.card;
+      const actIdx = parseInt(input.dataset.act);
+      const field  = input.dataset.field;
+      const card   = data.cards.find(c => c.id === cardId);
+      if (!card) return;
+
+      const act = card.activities[actIdx];
+      act[field] = parseFloat(input.value) || 0;
+
+      // atualiza span de visualização
+      const viewSpan = document.querySelector(`.act-vals-view[data-card="${cardId}"][data-act="${actIdx}"]`);
+      if (viewSpan) viewSpan.textContent = `${act.real} / ${act.meta}`;
+
+      // atualiza barra de progresso
+      const pct = calcPct(act.real, act.meta);
+      const displayPct = Math.min(pct, 100);
+      const bar = document.getElementById(`bar-${cardId}-${actIdx}`);
+      if (bar) {
+        bar.style.width = displayPct + '%';
+        bar.style.background = barColor(pct);
+        const lbl = bar.parentElement.querySelector('.progress-label');
+        if (lbl) lbl.textContent = displayPct + '%';
+      }
+
+      // atualiza totais do card
+      const totalMeta = card.activities.reduce((s, a) => s + (a.na ? 0 : a.meta), 0);
+      const totalReal = card.activities.reduce((s, a) => s + (a.na ? 0 : a.real), 0);
+      const metaEl = document.getElementById(`total-meta-${cardId}`);
+      const realEl = document.getElementById(`total-real-${cardId}`);
+      if (metaEl) metaEl.textContent = totalMeta;
+      if (realEl) realEl.textContent = totalReal;
     });
   });
 }
@@ -643,6 +701,7 @@ function setEditMode(on, data) {
 
 function collectEdits(data) {
   document.querySelectorAll('[data-field]').forEach(el => {
+    if (el.tagName === 'INPUT') return; // val-inputs já atualizam appData via listener
     const cardId = el.dataset.card;
     const field  = el.dataset.field;
     const actIdx = el.dataset.act;
@@ -653,10 +712,6 @@ function collectEdits(data) {
       const act = card.activities[parseInt(actIdx)];
       if (field === 'name') {
         act.name = el.textContent.trim();
-      } else if (field === 'vals') {
-        const parts = el.textContent.split('/').map(s => parseFloat(s.trim()));
-        if (!isNaN(parts[0])) act.real = parts[0];
-        if (!isNaN(parts[1])) act.meta = parts[1];
       } else if (field === 'real') {
         act.real = parseFloat(el.textContent.trim()) || 0;
       }
