@@ -167,14 +167,20 @@
   }
 
   .cards-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 20px;
     max-width: 1300px;
     margin: 0 auto;
   }
 
-  @media (max-width: 900px) { .cards-grid { grid-template-columns: 1fr; } }
+  .cards-grid .card {
+    flex: 1 1 300px;
+    max-width: 420px;
+  }
+
+  @media (max-width: 900px) { .cards-grid .card { max-width: 100%; } }
 
   /* ── CARD ── */
   .card {
