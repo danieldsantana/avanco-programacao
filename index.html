@@ -557,9 +557,7 @@ function renderCard(card) {
 
   const totalMeta = card.activities.reduce((s, a) => s + (a.na ? 0 : a.meta), 0);
   const totalReal = card.activities.reduce((s, a) => s + (a.na ? 0 : a.real), 0);
-  const avancoAcumulado = totalMeta > 0
-    ? parseFloat((totalReal / totalMeta * 100).toFixed(2))
-    : 0;
+  const avancoAcumulado = totalMeta > 0 ? (totalReal / totalMeta * 100).toFixed(2) : '0.00';
 
   const metaHTML = `
   <div class="meta-box">
@@ -567,7 +565,7 @@ function renderCard(card) {
     <div><strong id="total-meta-${card.id}">${totalMeta}</strong></div>
     <div>AVANÇO:</div>
     <div><strong id="total-real-${card.id}">${totalReal}</strong></div>
-    <div class="meta-total">AVANÇO ACUMULADO: <span id="total-acum-${card.id}">${avancoAcumulado}</span>%</div>
+    <div class="meta-total">AVANÇO ACUMULADO: <strong id="total-acum-${card.id}">${avancoAcumulado}</strong>%</div>
   </div>`;
 
   const footerLabel = card.msgFooterLabel
@@ -656,9 +654,10 @@ function attachValListeners(data) {
       const acumEl = document.getElementById(`total-acum-${cardId}`);
       if (metaEl) metaEl.textContent = totalMeta;
       if (realEl) realEl.textContent = totalReal;
-      if (acumEl) acumEl.textContent = totalMeta > 0
-        ? parseFloat((totalReal / totalMeta * 100).toFixed(2))
-        : 0;
+      if (acumEl) {
+        const acum = totalMeta > 0 ? (totalReal / totalMeta * 100).toFixed(2) : '0.00';
+        acumEl.textContent = acum;
+      }
     });
   });
 }
