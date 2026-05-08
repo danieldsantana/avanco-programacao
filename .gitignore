@@ -9,3 +9,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Utilitários de uso único com credenciais
+seed-emojis.html
