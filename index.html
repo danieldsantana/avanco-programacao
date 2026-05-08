@@ -1160,7 +1160,7 @@ function setEditMode(on, data) {
           bar.style.width = Math.min(pct, 100) + '%';
           bar.style.background = barColor(pct);
           const lbl = bar.parentElement.querySelector('.progress-label');
-          if (lbl) lbl.textContent = pct + '%';
+          if (lbl) lbl.textContent = Math.min(pct, 100) + '%';
         }
       });
     });
