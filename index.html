@@ -596,6 +596,60 @@
   .add-activity-btn:hover { border-color: var(--teal); color: var(--teal); }
   body.edit-mode .add-activity-btn { display: block; }
 
+  /* Ghost card — novo card */
+  .add-card-ghost {
+    display: none;
+    flex: 1 1 300px;
+    max-width: 420px;
+    min-height: 220px;
+    border: 3px dashed #ccc;
+    border-radius: 12px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    color: #bbb;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: #fafafa;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .add-card-ghost:hover { border-color: var(--teal); color: var(--teal); }
+  .add-card-ghost .ghost-plus { font-size: 2.5rem; line-height: 1; font-weight: 300; }
+  body.edit-mode .add-card-ghost { display: flex; }
+
+  /* New-card modal — campos de cor e emoji */
+  .new-card-color-row {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #555;
+  }
+  .new-card-color-row input[type="color"] {
+    width: 36px; height: 36px;
+    border: none; border-radius: 6px;
+    cursor: pointer; padding: 0; background: none;
+    margin-left: 6px;
+  }
+  #newCardEmojiBtn {
+    font-size: 1.8rem;
+    background: #f0f0f0;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 2px 8px;
+    line-height: 1.4;
+    margin-left: 6px;
+  }
+
   /* ── PRINT ── */
   @media print {
     .toolbar { display: none; }
@@ -639,6 +693,26 @@
   </div>
 
 </div><!-- #pdf-content -->
+
+<!-- Modal Novo Card -->
+<div id="newCardModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">➕ Novo Card</div>
+    <input type="text" id="newCardTitle" class="modal-input" placeholder="Título (ex: ESTRUTURA)" maxlength="40">
+    <div class="new-card-color-row">
+      COR 1: <input type="color" id="newCardColor1" value="#1a9bb5">
+      COR 2: <input type="color" id="newCardColor2" value="#a8e063">
+    </div>
+    <div class="new-card-color-row">
+      EMOJI: <button id="newCardEmojiBtn" type="button">🔧</button>
+    </div>
+    <div id="newCardError" class="login-error"></div>
+    <div class="modal-actions">
+      <button class="btn btn-save" id="newCardSubmit">Criar</button>
+      <button class="btn btn-print" id="newCardCancel">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal de Login -->
 <div id="loginModal" class="modal-overlay">
@@ -919,7 +993,12 @@ function renderCard(card) {
 
 function render(data) {
   const grid = document.getElementById('grid');
-  grid.innerHTML = data.cards.map(renderCard).join('');
+  grid.innerHTML = data.cards.map(renderCard).join('') +
+    `<div class="add-card-ghost" id="addCardGhost">
+       <span class="ghost-plus">+</span>
+       <span>Novo Card</span>
+     </div>`;
+  document.getElementById('addCardGhost').addEventListener('click', openNewCardModal);
   attachMetaListeners(data);
   attachValListeners(data);
   attachCardEditListeners(data);
@@ -1127,6 +1206,68 @@ function attachCardEditListeners(data) {
 ════════════════════════════════════════════ */
 let editMode = false;
 let emojiList = [];
+let newCardEmoji = '🔧';
+
+function slugify(text) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '')
+    || 'card';
+}
+
+function openNewCardModal() {
+  newCardEmoji = '🔧';
+  document.getElementById('newCardEmojiBtn').textContent = newCardEmoji;
+  document.getElementById('newCardTitle').value = '';
+  document.getElementById('newCardColor1').value = '#1a9bb5';
+  document.getElementById('newCardColor2').value = '#a8e063';
+  document.getElementById('newCardError').textContent = '';
+  document.getElementById('newCardModal').classList.add('open');
+  document.getElementById('newCardTitle').focus();
+}
+
+function closeNewCardModal() {
+  document.getElementById('newCardModal').classList.remove('open');
+}
+
+function doCreateCard() {
+  const titleRaw = document.getElementById('newCardTitle').value.trim();
+  const errorEl  = document.getElementById('newCardError');
+  if (!titleRaw) { errorEl.textContent = 'Informe um título para o card.'; return; }
+
+  let baseId = slugify(titleRaw);
+  let uniqueId = baseId;
+  let counter = 2;
+  while (appData.cards.find(c => c.id === uniqueId)) {
+    uniqueId = baseId + counter++;
+  }
+
+  const color1   = document.getElementById('newCardColor1').value;
+  const color2   = document.getElementById('newCardColor2').value;
+  const maxOrder = appData.cards.reduce((m, c) => Math.max(m, c.sortOrder || 0), 0);
+
+  appData.cards.push({
+    id:            uniqueId,
+    theme:         'teal',
+    emoji:         newCardEmoji,
+    title:         titleRaw.toUpperCase(),
+    titleSub:      null,
+    subLabel:      null,
+    visible:       true,
+    color1,
+    color2,
+    message:       '',
+    msgFooterLabel: null,
+    sortOrder:     maxOrder + 1,
+    activities:    [],
+  });
+
+  closeNewCardModal();
+  render(appData);
+  setEditMode(true, appData);
+}
 
 function setEditMode(on, data) {
   editMode = on;
@@ -1289,6 +1430,36 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     console.error(err);
   }
   setTimeout(() => { btn.textContent = '💾 Salvar'; btn.disabled = false; }, 2500);
+});
+
+document.getElementById('newCardSubmit').addEventListener('click', doCreateCard);
+document.getElementById('newCardCancel').addEventListener('click', closeNewCardModal);
+document.getElementById('newCardTitle').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doCreateCard();
+});
+document.getElementById('newCardModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('newCardModal')) closeNewCardModal();
+});
+document.getElementById('newCardEmojiBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  const actPopup = document.getElementById('actEmojiPopup');
+  actPopup.innerHTML = emojiList.map(em =>
+    `<button class="act-emoji-opt" data-newcard="1" data-emoji="${em}">${em}</button>`
+  ).join('');
+  actPopup.querySelectorAll('.act-emoji-opt[data-newcard]').forEach(btn => {
+    btn.addEventListener('click', ev => {
+      ev.stopPropagation();
+      newCardEmoji = btn.dataset.emoji;
+      document.getElementById('newCardEmojiBtn').textContent = newCardEmoji;
+      actPopup.classList.remove('open');
+    });
+  });
+  const rect = e.target.getBoundingClientRect();
+  actPopup.style.top  = (rect.bottom + 4) + 'px';
+  actPopup.style.left = rect.left + 'px';
+  document.querySelectorAll('.emoji-picker-popup.open')
+    .forEach(p => { if (p !== actPopup) p.classList.remove('open'); });
+  actPopup.classList.add('open');
 });
 
 document.getElementById('loginBtn').addEventListener('click', showLoginModal);
