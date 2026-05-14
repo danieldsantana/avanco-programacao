@@ -99,6 +99,7 @@
   .btn-print  { background: #555; color: #fff; }
   .btn-login  { background: #2c3e50; color: #fff; }
   .btn-logout { background: #95a5a6; color: #fff; }
+  .btn-cancel { background: var(--red); color: #fff; }
   .btn:hover  { opacity: 0.85; transform: translateY(-1px); }
   .btn:disabled { opacity: 0.6; cursor: default; transform: none; }
 
@@ -672,6 +673,7 @@
 <div class="toolbar">
   <button class="btn btn-edit" id="toggleEdit" style="display:none">✏️ Editar Dados</button>
   <button class="btn btn-save" id="saveBtn" style="display:none">💾 Salvar</button>
+  <button class="btn btn-cancel" id="cancelBtn" style="display:none">✖ Cancelar</button>
   <button class="btn btn-login" id="loginBtn">🔐 Login</button>
   <button class="btn btn-logout" id="logoutBtn" style="display:none">🚪 Sair</button>
   <button class="btn btn-print" id="pdfBtn">📄 Gerar PDF</button>
@@ -1282,6 +1284,7 @@ function setEditMode(on, data) {
   });
 
   document.getElementById('toggleEdit').textContent = on ? '🔒 Fechar Edição' : '✏️ Editar Dados';
+  document.getElementById('cancelBtn').style.display = on ? '' : 'none';
 
   if (on) {
     data.cards.forEach(card => {
@@ -1430,6 +1433,22 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     console.error(err);
   }
   setTimeout(() => { btn.textContent = '💾 Salvar'; btn.disabled = false; }, 2500);
+});
+
+document.getElementById('cancelBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('cancelBtn');
+  btn.textContent = '⏳ Recarregando...';
+  btn.disabled = true;
+  try {
+    appData = await loadData();
+    appData._deletedActivityIds = [];
+    render(appData);
+    setEditMode(false, appData);
+  } catch (err) {
+    console.error(err);
+    btn.textContent = '✖ Cancelar';
+    btn.disabled = false;
+  }
 });
 
 document.getElementById('newCardSubmit').addEventListener('click', doCreateCard);
